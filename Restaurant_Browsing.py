@@ -98,15 +98,15 @@ class RestaurantDatabase:
         """
         self.restaurants = [
             {"name": "Italian Bistro", "cuisine": "Italian", "location": "Downtown", "rating": 4.5, 
-             "price_range": "$$", "delivery": True},
+             "price_range": "$$", "delivery": True, "timesRated": 1, "totalRating": 4.5},
             {"name": "Sushi House", "cuisine": "Japanese", "location": "Midtown", "rating": 4.8, 
-             "price_range": "$$$", "delivery": False},
+             "price_range": "$$$", "delivery": False, "timesRated": 1, "totalRating": 4.8},
             {"name": "Burger King", "cuisine": "Fast Food", "location": "Uptown", "rating": 4.0, 
-             "price_range": "$", "delivery": True},
+             "price_range": "$", "delivery": True, "timesRated": 1, "totalRating": 4.0},
             {"name": "Taco Town", "cuisine": "Mexican", "location": "Downtown", "rating": 4.2, 
-             "price_range": "$", "delivery": True},
+             "price_range": "$", "delivery": True, "timesRated": 1, "totalRating": 4.2},
             {"name": "Pizza Palace", "cuisine": "Italian", "location": "Uptown", "rating": 3.9, 
-             "price_range": "$$", "delivery": True}
+             "price_range": "$$", "delivery": True, "timesRated": 1, "totalRating": 3.9}
         ]
 
     def get_restaurants(self):
@@ -117,6 +117,7 @@ class RestaurantDatabase:
             list: A list of dictionaries, where each dictionary contains restaurant information.
         """
         return self.restaurants
+    
 
 
 class RestaurantSearch:
