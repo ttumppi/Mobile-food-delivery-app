@@ -127,5 +127,28 @@ class TestUserRegistration(unittest.TestCase):
         self.assertFalse(result['success'])  # Ensures registration fails due to the email already being registered.
         self.assertEqual(result['error'], "Email already registered")  # Checks the specific error message.
 
+    def test_special_characters_in_email(self):
+        result = self.registration.register("user*testexample.com", "Password123", "Password123")
+        self.assertFalse(result['success']) # Ensures registration fails due to special characters in the email.
+        self.assertEqual(result['error'], "Invalid email format")
+    
+    def test_empty_email(self):
+
+        result = self.registration.register("", "Password123", "Password123")
+        self.assertFalse(result['success']) # Ensures registration fails due to an empty email.
+        self.assertEqual(result['error'], "Invalid email format")
+    
+    def test_empty_password(self):
+   
+        result = self.registration.register("user@example.com", "", "")
+        self.assertFalse(result['success']) # Ensures registration fails due to a empty password.
+        self.assertEqual(result['error'], "Password is not strong enough")
+
+    def test_successful_case_insensitive_email_registration(self):
+
+        result = self.registration.register("USER@EXAMPLE.COM", "Password123", "Password123")
+        self.assertTrue(result['success']) # Ensures email registration is case-insensitive
+        self.assertEqual(result['message'], "Registration successful, confirmation email sent")
+
 if __name__ == '__main__':
     unittest.main()

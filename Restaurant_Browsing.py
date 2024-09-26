@@ -198,6 +198,30 @@ class TestRestaurantBrowsing(unittest.TestCase):
         results = self.browsing.search_by_filters(cuisine_type="Italian", location="Downtown", min_rating=4.0)
         self.assertEqual(len(results), 1)  # Only one restaurant should match all the filters
         self.assertEqual(results[0]['name'], "Italian Bistro")  # The result should be "Italian Bistro"
+        
+    def test_search_by_exact_rating(self):
+      
+        results = self.browsing.search_by_rating(4.0)
+        self.assertIn("Burger King", [restaurant['name'] for restaurant in results])  # Check if "Burger King" is included
+        self.assertNotIn("Pizza Palace", [restaurant['name'] for restaurant in results])  # Check if "Pizza Palace" is not included
+       
+    def test_search_by_location_and_rating(self):
+        
+        results = self.browsing.search_by_filters(location="Downtown", min_rating=4.0)
+        self.assertEqual(len(results), 2)  # Should return both "Italian Bistro" and "Taco Town"
+
+    def test_search_by_nonexistent_cuisine(self):
+       
+        results = self.browsing.search_by_cuisine("French")
+        self.assertEqual(len(results), 0)  # Should return an empty list
+
+    def test_search_by_invalid_rating(self):
+       
+        results = self.browsing.search_by_rating(-1) # Negative rating
+        self.assertGreater(len(results), 0) # Expecting that some restaurants will be returned
+
+        results = self.browsing.search_by_rating(6) # Rating higher than 5
+        self.assertEqual(len(results), 0) # No restaurants should have a rating greater than 5
 
 
 if __name__ == '__main__':
