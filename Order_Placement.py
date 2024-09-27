@@ -321,6 +321,26 @@ class UserProfile:
         self.ID = UserProfile.__availableID #Add unique id to this object on creation
         UserProfile.__availableID += 1 # Increment static class field for next object
 
+        self.favourites = []
+
+    def AddRestaurantToFavourites(self, restaurant):
+
+        if restaurant in self.favourites:
+            return
+        
+        self.favourites.append(restaurant)
+
+    def RemoveRestaurantFromFavourites(self, restaurant):
+
+        if restaurant not in self.favourites:
+            return
+
+        self.favourites.remove(restaurant)
+
+    def GetFavouriteRestaurants(self):
+
+        return self.favourites
+
 
 # RestaurantMenu Class (for simulating available menu items)
 class RestaurantMenu:
@@ -502,6 +522,30 @@ class TestOrderPlacement(unittest.TestCase):
         self.order.Preorder(orderDate)
 
         self.assertTrue(self.order.preorderDeliveryTime != orderDate)
+
+    def test_user_has_added_restaurant_as_favourite(self):
+        restaurantToAdd = RestaurantDatabase().get_restaurants()[0]
+
+        self.user_profile.AddRestaurantToFavourites(restaurantToAdd)
+
+        self.assertTrue(self.user_profile.GetFavouriteRestaurants()[0] == restaurantToAdd)
+
+    def test_users_favourite_restaurant_can_be_removed(self):
+        restaurantToUse = RestaurantDatabase().get_restaurants()[0]
+
+        self.user_profile.AddRestaurantToFavourites(restaurantToUse)
+        self.user_profile.RemoveRestaurantFromFavourites(restaurantToUse)
+
+        self.assertTrue(len(self.user_profile.GetFavouriteRestaurants()) == 0)
+
+    def test_user_cannot_have_same_restaurant_twice_at_same_time_in_favourites(self):
+        restaurantToUse = RestaurantDatabase().get_restaurants()[0]
+        
+        self.user_profile.AddRestaurantToFavourites(restaurantToUse)
+        self.user_profile.AddRestaurantToFavourites(restaurantToUse)
+
+        self.assertTrue(len(self.user_profile.GetFavouriteRestaurants()) == 1)
+
 
 
 
