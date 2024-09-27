@@ -2,6 +2,8 @@ import unittest
 from unittest import mock  # Import the mock module for simulating payment failures in tests.
 from enum import Enum
 import re
+import datetime
+from Restaurant_Browsing import RestaurantDatabase
 
 # CartItem Class
 class CartItem:
@@ -145,7 +147,7 @@ class OrderPlacement:
         user_profile (UserProfile): The user's profile, including delivery address.
         restaurant_menu (RestaurantMenu): The menu containing available restaurant items.
     """
-    def __init__(self, cart, user_profile, restaurant_menu):
+    def __init__(self, cart, user_profile, restaurant_menu, restaurant):
         """
         Initializes an OrderPlacement object with the cart, user profile, and restaurant menu.
         
@@ -159,6 +161,10 @@ class OrderPlacement:
         self.restaurant_menu = restaurant_menu
         self.paymentDone = False
         self.orderStatus = OrderStatus.NotOrdered
+        self.preorder = False
+        self.preorderDeliveryTime = datetime.date(1,1,1)
+        self.restaurant = restaurant
+        
 
     def validate_order(self):
         """
@@ -222,6 +228,42 @@ class OrderPlacement:
         
         if (self.orderStatus.value < OrderStatus.Delivered.value):
             self.orderStatus = OrderStatus(self.orderStatus.value +1)
+
+    def Preorder(self, date):
+
+        if not self.restaurant["preorderAvailable"]:
+            return
+        
+        if self.paymentDone:
+            return
+        
+        currentDateTime = datetime.datetime.now()
+        if date < currentDateTime:
+            return
+        
+        if self.restaurant["openingTime"] < date.hour and self.restaurant["closingTime"] > date.hour:
+
+            self.preorderDeliveryTime = date
+            self.preorder = True
+
+    def EditPreorderDeliveryTime(self, date):
+        if not self.preorder:
+            return
+
+        currentDateTime = datetime.datetime.now()
+
+        dateDifference = date - currentDateTime
+        dateDifferenceInHours = dateDifference.total_seconds() / 3600
+        
+        if (dateDifferenceInHours < 30):
+            return
+        
+        self.preorderDeliveryTime = date
+
+    def ValidPreorderTime(self, date):
+        return (float(date.hour) > self.restaurant["openingTime"]) & (float(date.hour) < self.restaurant["closingTime"])
+        
+
     
 
 class OrderStatus(Enum):
@@ -322,7 +364,7 @@ class TestOrderPlacement(unittest.TestCase):
         self.restaurant_menu = RestaurantMenu(available_items=["Burger", "Pizza", "Salad"])
         self.user_profile = UserProfile(delivery_address="123 Main St")
         self.cart = Cart()
-        self.order = OrderPlacement(self.cart, self.user_profile, self.restaurant_menu)
+        self.order = OrderPlacement(self.cart, self.user_profile, self.restaurant_menu, RestaurantDatabase().get_restaurants()[0])
 
     def test_validate_order_empty_cart(self):
         """
@@ -395,6 +437,72 @@ class TestOrderPlacement(unittest.TestCase):
             self.order.AdvanceOrderStatus()
 
         self.assertTrue(self.order.orderStatus == OrderStatus.Delivered)
+
+    def test_preorder_sets_delivery_date(self):
+        self.cart.add_item("Pizza", 12.99, 1)
+        payment_method = PaymentMethod()
+        orderDate = datetime.datetime.now() + datetime.timedelta(hours=3)
+
+        while not self.order.ValidPreorderTime(orderDate):
+            orderDate = orderDate + datetime.timedelta(hours=3)
+
+        self.order.Preorder(orderDate)
+
+        self.assertTrue(self.order.preorderDeliveryTime == orderDate)
+
+    def test_cannot_set_preorder_date_past_date(self):
+        self.cart.add_item("Pizza", 12.99, 1)
+        payment_method = PaymentMethod()
+        orderDate = datetime.datetime.now() - datetime.timedelta(hours=10)
+        self.order.Preorder(orderDate)
+
+        self.assertTrue(self.order.preorderDeliveryTime != orderDate)
+
+    def test_cannot_edit_preorder_date_under_thirty_hours_of_preorder_date(self):
+        self.cart.add_item("Pizza", 12.99, 1)
+        payment_method = PaymentMethod()
+        
+        orderDate = datetime.datetime.now() + datetime.timedelta(hours=2)
+        
+        while not self.order.ValidPreorderTime(orderDate):
+            orderDate = orderDate + datetime.timedelta(hours=3)
+
+        self.order.Preorder(orderDate)
+        self.order.EditPreorderDeliveryTime(datetime.datetime.now() + datetime.timedelta(minutes=30))
+
+
+        self.assertTrue(self.order.preorderDeliveryTime == orderDate)
+
+    def test_cannot_set_preorder_delivery_time_outside_of_restaurant_open_hours(self):
+        self.cart.add_item("Pizza", 12.99, 1)
+        payment_method = PaymentMethod()
+        
+        orderDate = datetime.datetime.now() + datetime.timedelta(hours=2)
+        
+        while self.order.ValidPreorderTime(orderDate):
+            orderDate = orderDate + datetime.timedelta(hours=3)
+
+        self.order.Preorder(orderDate)
+        
+
+
+        self.assertTrue(self.order.preorderDeliveryTime != orderDate)
+
+    def test_cannot_preorder_from_non_preorderable_restaurant(self):
+
+        self.cart.add_item("Pizza", 12.99, 1)
+        payment_method = PaymentMethod()
+        
+        orderDate = datetime.datetime.now() + datetime.timedelta(hours=2)
+        
+        while not self.order.ValidPreorderTime(orderDate):
+            orderDate = orderDate + datetime.timedelta(hours=3)
+
+        self.order.restaurant = RestaurantDatabase().get_restaurants()[1]
+        self.order.Preorder(orderDate)
+
+        self.assertTrue(self.order.preorderDeliveryTime != orderDate)
+
 
 
 if __name__ == "__main__":

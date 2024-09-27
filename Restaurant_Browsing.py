@@ -98,15 +98,15 @@ class RestaurantDatabase:
         """
         self.restaurants = [
             {"name": "Italian Bistro", "cuisine": "Italian", "location": "Downtown", "rating": 4.5, 
-             "price_range": "$$", "delivery": True, "timesRated": 1, "totalRating": 4.5},
+             "price_range": "$$", "delivery": True, "timesRated": 1, "totalRating": 4.5, "openingTime": 7.3, "closingTime": 18.0, "preorderAvailable": True},
             {"name": "Sushi House", "cuisine": "Japanese", "location": "Midtown", "rating": 4.8, 
-             "price_range": "$$$", "delivery": False, "timesRated": 1, "totalRating": 4.8},
+             "price_range": "$$$", "delivery": False, "timesRated": 1, "totalRating": 4.8, "openingTime": 8.0, "closingTime": 20.0, "preorderAvailable": False},
             {"name": "Burger King", "cuisine": "Fast Food", "location": "Uptown", "rating": 4.0, 
-             "price_range": "$", "delivery": True, "timesRated": 1, "totalRating": 4.0},
+             "price_range": "$", "delivery": True, "timesRated": 1, "totalRating": 4.0, "openingTime": 9.0, "closingTime": 21.0, "preorderAvailable": False},
             {"name": "Taco Town", "cuisine": "Mexican", "location": "Downtown", "rating": 4.2, 
-             "price_range": "$", "delivery": True, "timesRated": 1, "totalRating": 4.2},
+             "price_range": "$", "delivery": True, "timesRated": 1, "totalRating": 4.2, "openingTime": 10.0, "closingTime": 22.0, "preorderAvailable": False},
             {"name": "Pizza Palace", "cuisine": "Italian", "location": "Uptown", "rating": 3.9, 
-             "price_range": "$$", "delivery": True, "timesRated": 1, "totalRating": 3.9}
+             "price_range": "$$", "delivery": True, "timesRated": 1, "totalRating": 3.9, "openingTime": 8.0, "closingTime": 21.0, "preorderAvailable": False}
         ]
 
     def get_restaurants(self):
