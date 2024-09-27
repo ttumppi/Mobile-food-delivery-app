@@ -1,5 +1,7 @@
 import unittest
 from unittest import mock  # Import the mock module for simulating payment failures in tests.
+from enum import Enum
+import re
 
 # CartItem Class
 class CartItem:
@@ -155,6 +157,8 @@ class OrderPlacement:
         self.cart = cart
         self.user_profile = user_profile
         self.restaurant_menu = restaurant_menu
+        self.paymentDone = False
+        self.orderStatus = OrderStatus.NotOrdered
 
     def validate_order(self):
         """
@@ -203,6 +207,7 @@ class OrderPlacement:
         payment_success = payment_method.process_payment(self.cart.calculate_total()["total"])
 
         if payment_success:
+            self.paymentDone = True
             return {
                 "success": True,
                 "message": "Order confirmed",
@@ -210,6 +215,28 @@ class OrderPlacement:
                 "estimated_delivery": "45 minutes"
             }
         return {"success": False, "message": "Payment failed"}
+    
+    def AdvanceOrderStatus(self):
+        if (not self.paymentDone):
+            return
+        
+        if (self.orderStatus.value < OrderStatus.Delivered.value):
+            self.orderStatus = OrderStatus(self.orderStatus.value +1)
+    
+
+class OrderStatus(Enum):
+    NotOrdered = 0
+    OrderReceived = 1
+    BeingDelivered = 2
+    Delivered = 3
+
+    def __str__(self):
+        match = re.search(".[A-Z].", self.name)
+        if not match:
+            return self.name
+        indexOfInsert = match.span(0)[0]
+        enumWithWhiteSpace = self.name[:indexOfInsert +1] + " " + self.name[indexOfInsert + 1:]
+        return enumWithWhiteSpace
 
 
 # PaymentMethod Class
@@ -347,6 +374,29 @@ class TestOrderPlacement(unittest.TestCase):
             self.assertFalse(result["success"])
             self.assertEqual(result["message"], "Payment failed")
 
+    def test_order_status_not_advancing_without_successfull_payment(self):
+        self.order.AdvanceOrderStatus()
+        self.assertTrue(self.order.orderStatus == OrderStatus.NotOrdered)
+
+    def test_order_status_advances_when_order_done(self):
+        self.cart.add_item("Pizza", 12.99, 1)
+        payment_method = PaymentMethod()
+        result = self.order.confirm_order(payment_method)
+
+        self.order.AdvanceOrderStatus()
+        self.assertTrue(self.order.orderStatus == OrderStatus.OrderReceived)
+
+    def test_order_status_does_not_advance_after_delivered_status(self):
+        self.cart.add_item("Pizza", 12.99, 1)
+        payment_method = PaymentMethod()
+        result = self.order.confirm_order(payment_method)
+
+        for i in range(10):
+            self.order.AdvanceOrderStatus()
+
+        self.assertTrue(self.order.orderStatus == OrderStatus.Delivered)
+
 
 if __name__ == "__main__":
+    
     unittest.main()
