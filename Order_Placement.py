@@ -155,15 +155,17 @@ class OrderPlacement:
             cart (Cart): The shopping cart.
             user_profile (UserProfile): The user's profile.
             restaurant_menu (RestaurantMenu): The restaurant menu with available items.
+            restaurant (Dictionary): restaurant that is being ordered from
         """
         self.cart = cart
         self.user_profile = user_profile
         self.restaurant_menu = restaurant_menu
-        self.paymentDone = False
-        self.orderStatus = OrderStatus.NotOrdered
-        self.preorder = False
-        self.preorderDeliveryTime = datetime.date(1,1,1)
-        self.restaurant = restaurant
+
+        self.paymentDone = False # bool to reflect that order has been payed
+        self.orderStatus = OrderStatus.NotOrdered # Enum to reflect order  status
+        self.preorder = False # bool to reflect has the order been pre ordered
+        self.preorderDeliveryTime = datetime.date(1,1,1) # placeholder date value for preorder date
+        self.restaurant = restaurant # dictionary object  containing restaurant data
         
 
     def validate_order(self):
@@ -223,56 +225,70 @@ class OrderPlacement:
         return {"success": False, "message": "Payment failed"}
     
     def AdvanceOrderStatus(self):
-        if (not self.paymentDone):
+        ''' Moves order status to the next state
+        '''
+        if (not self.paymentDone): # return if order has not been payed
             return
         
-        if (self.orderStatus.value < OrderStatus.Delivered.value):
+        if (self.orderStatus.value < OrderStatus.Delivered.value): # check if order status is in final state
             self.orderStatus = OrderStatus(self.orderStatus.value +1)
 
     def Preorder(self, date):
+        ''' Sets order's preorder delivery date
+        '''
 
-        if not self.restaurant["preorderAvailable"]:
+        if not self.restaurant["preorderAvailable"]: # check if restaurant supports preordering
             return
         
-        if self.paymentDone:
+        if self.paymentDone: #check if order has been payed
             return
         
         currentDateTime = datetime.datetime.now()
-        if date < currentDateTime:
+        if date < currentDateTime: # check if preordering date is set in past
             return
         
-        if self.restaurant["openingTime"] < date.hour and self.restaurant["closingTime"] > date.hour:
+        if self.restaurant["openingTime"] < date.hour and self.restaurant["closingTime"] > date.hour: # if restaurant is open during delivery time
 
             self.preorderDeliveryTime = date
             self.preorder = True
 
     def EditPreorderDeliveryTime(self, date):
-        if not self.preorder:
+        ''' Enables editing preorder delivery date
+        '''
+        if not self.preorder: #if order has not a set delivery time, there is nothing to edit
             return
 
         currentDateTime = datetime.datetime.now()
 
         dateDifference = date - currentDateTime
-        dateDifferenceInHours = dateDifference.total_seconds() / 3600
+
+        dateDifferenceInHours = dateDifference.total_seconds() / 3600 
         
-        if (dateDifferenceInHours < 30):
+        if (dateDifferenceInHours < 30): # if delivery is set under 30 hours from now, disable editing
             return
         
         self.preorderDeliveryTime = date
 
     def ValidPreorderTime(self, date):
+        ''' Check if given date is during restaurant operating time 
+        '''
         return (float(date.hour) > self.restaurant["openingTime"]) & (float(date.hour) < self.restaurant["closingTime"])
         
 
     
 
 class OrderStatus(Enum):
+    ''' Represents phases during delivery
+    '''
     NotOrdered = 0
     OrderReceived = 1
     BeingDelivered = 2
     Delivered = 3
 
     def __str__(self):
+        ''' Changes enum names to add a whitespace between two words
+        '''
+
         match = re.search(".[A-Z].", self.name)
         if not match:
             return self.name
@@ -308,6 +324,8 @@ class UserProfile:
     
     Attributes:
         delivery_address (str): The user's delivery address.
+        ID : unique identifier for each user.
+        favourites : list of user's favourite restaurants.
     """
     __availableID = 0
     def __init__(self, delivery_address):
@@ -321,7 +339,7 @@ class UserProfile:
         self.ID = UserProfile.__availableID #Add unique id to this object on creation
         UserProfile.__availableID += 1 # Increment static class field for next object
 
-        self.favourites = []
+        self.favourites = [] #list of restaurants
 
     def AddRestaurantToFavourites(self, restaurant):
 
@@ -437,10 +455,12 @@ class TestOrderPlacement(unittest.TestCase):
             self.assertEqual(result["message"], "Payment failed")
 
     def test_order_status_not_advancing_without_successfull_payment(self):
+        '''Does not advance order status if order has not been payed'''
         self.order.AdvanceOrderStatus()
         self.assertTrue(self.order.orderStatus == OrderStatus.NotOrdered)
 
     def test_order_status_advances_when_order_done(self):
+        '''Delivery status can be advanced after payment'''
         self.cart.add_item("Pizza", 12.99, 1)
         payment_method = PaymentMethod()
         result = self.order.confirm_order(payment_method)

@@ -3,22 +3,29 @@ from Restaurant_Browsing import RestaurantDatabase
 from Order_Placement import UserProfile
 
 class RestaurantRater:
-    '''Handles user ratings'''
+    '''Handles user ratings
+        Contains restaurant database list 
+        Contains Dictionary that uses user id as key and dictionaries with restaurant name and rating as value ( {UserID : {restaurant name : rating} } )
+    '''
     def __init__(self, restaurantList):
         self.userRatings = {}
         self.restaurants = restaurantList
 
     def RateRestaurant(self, restaurantName, userID, rating):
+        '''Handles setting a rating between 1 and 5 to the specific restaurant'''
         if rating < 1 or rating > 5:
             return
+        
         if userID not in self.userRatings.keys():
             self.userRatings[userID] = {}
 
-        self.userRatings[userID][restaurantName] = rating
+        self.userRatings[userID][restaurantName] = rating # set rating to dictionary with each user's rating
         self.restaurants
 
         for restaurant in self.restaurants:
-            if restaurant["name"] == restaurantName:
+            if restaurant["name"] == restaurantName: # check for correct restaurant
+                
+                #calculate new rating for restaurant
 
                 restaurant["totalRating"] += rating
                 restaurant["timesRated"] += 1
@@ -28,13 +35,16 @@ class RestaurantRater:
     def EditRestaurantRating(self, restaurantName, userID, rating):
         if (rating < 1 | rating > 5):
             return
-        if userID not in self.userRatings.keys():
+        if userID not in self.userRatings.keys(): #no rating exists by this user so return
             return
+        
         if restaurantName not in self.userRatings[userID]:
             return
         
         for restaurant in self.restaurants:
             if restaurant["name"] == restaurantName:
+
+                #remove old rating from restaurant and add new edited rating
                 restaurant["totalRating"] -= self.userRatings[userID][restaurantName]
                 restaurant["totalRating"] += rating
                 restaurant["rating"] = restaurant["totalRating"] / restaurant["timesRated"]
